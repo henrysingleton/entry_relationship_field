@@ -679,6 +679,7 @@
 							if ($parentIncludableElement != $fieldName) {
 								// use the includable element's mode
 								$curMode = preg_replace('/^' . $fieldName . '\s*\:\s*/i', '', $parentIncludableElement , 1);
+								if ($curMode == "") $curMode = null;
 							} else {
 								// revert to the field's includable elements
 								$fieldIncludableElements = $field->fetchIncludableElements();
@@ -688,7 +689,7 @@
 							if ($field instanceof FieldEntry_relationship) {
 								$fieldIncludableElements = null;
 							}
-							
+
 							// include children
 							if (!empty($fieldIncludableElements) && count($fieldIncludableElements) > 1) {
 								// append each includable element
@@ -698,7 +699,11 @@
 									$field->appendFormattedElement($item, $data, $encode, $submode, $eId);
 								}
 							} else {
+								if ($field instanceof fieldTextarea && $curMode != 'formatted') {
+									$field->appendFormattedElement($item, $data, $encode, 'formatted', $eId);
+								}
 								$field->appendFormattedElement($item, $data, $encode, $curMode, $eId);
+
 							}
 						} else {
 							$item->appendChild(new XMLElement('error', __('Field "%s" not allowed', array($fieldName))));
