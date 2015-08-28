@@ -82,6 +82,7 @@
 			$this->set('allow_new', 'yes');
 			$this->set('allow_edit', 'yes');
 			$this->set('allow_link', 'yes');
+			$this->set('allow_delete', 'no');
 		}
 
 		public function isSortable()
@@ -266,6 +267,7 @@
 			$new_settings['allow_new'] = $settings['allow_new'] == 'yes' ? 'yes' : 'no';
 			$new_settings['allow_edit'] = $settings['allow_edit'] == 'yes' ? 'yes' : 'no';
 			$new_settings['allow_link'] = $settings['allow_link'] == 'yes' ? 'yes' : 'no';
+			$new_settings['allow_delete'] = $settings['allow_delete'] == 'yes' ? 'yes' : 'no';
 			
 			// save it into the array
 			$this->setArray($new_settings);
@@ -347,6 +349,7 @@
 				'allow_new' => $this->get('allow_new'),
 				'allow_edit' => $this->get('allow_edit'),
 				'allow_link' => $this->get('allow_link'),
+				'allow_delete' => $this->get('allow_delete'),
 			);
 
 			return FieldManager::saveSettings($id, $settings);
@@ -984,6 +987,7 @@
 			$permissions->appendChild($this->createCheckbox('allow_new', 'Show new button'));
 			$permissions->appendChild($this->createCheckbox('allow_edit', 'Show edit button'));
 			$permissions->appendChild($this->createCheckbox('allow_link', 'Show link button'));
+			$permissions->appendChild($this->createCheckbox('allow_delete', 'Show delete button'));
 			
 			$wrapper->appendChild($permissions);
 			
@@ -1152,6 +1156,7 @@
 					`allow_edit` 	enum('yes','no') NOT NULL COLLATE utf8_unicode_ci DEFAULT 'yes',
 					`allow_new` 	enum('yes','no') NOT NULL COLLATE utf8_unicode_ci DEFAULT 'yes',
 					`allow_link` 	enum('yes','no') NOT NULL COLLATE utf8_unicode_ci DEFAULT 'yes',
+					`allow_delete` 	enum('yes','no') NOT NULL COLLATE utf8_unicode_ci DEFAULT 'no',
 					PRIMARY KEY (`id`),
 					UNIQUE KEY `field_id` (`field_id`)
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -1185,6 +1190,16 @@
 			return true;
 		}
 		
+		public static function update_103()
+		{
+			$tbl = self::FIELD_TBL_NAME;
+			$sql = "
+				ALTER TABLE `$tbl`
+					ADD COLUMN `allow_delete` enum('yes','no') NOT NULL COLLATE utf8_unicode_ci  DEFAULT 'no'
+					AFTER `allow_link`
+			";
+			return Symphony::Database()->query($sql);
+		}
 		
 		/**
 		 *

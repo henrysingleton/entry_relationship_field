@@ -11,6 +11,8 @@
 
 	class contentExtensionEntry_Relationship_FieldRender extends XMLPage {
 		
+		const NUMBER_OF_URL_PARAMETERS = 2;
+
 		private $sectionManager;
 		private $fieldManager;
 		private $entryManager;
@@ -44,27 +46,42 @@
 		 * Builds the content view
 		 */
 		public function view() {
+			// _context[0] => entry values
+			// _context[1] => fieldId
 			if (!is_array($this->_context) || empty($this->_context)) {
-				$this->_Result->appendChild(new XMLElement('error', 'Parameters not found'));
+				$this->_Result->appendChild(new XMLElement('error', __('Parameters not found')));
+				return;
+			}
+			else if (count($this->_context) < self::NUMBER_OF_URL_PARAMETERS) {
+				$this->_Result->appendChild(new XMLElement('error', __('Not enough parameters')));
+				return;
+			}
+			else if (count($this->_context) > self::NUMBER_OF_URL_PARAMETERS) {
+				$this->_Result->appendChild(new XMLElement('error', __('Too many parameters')));
 				return;
 			}
 			
 			$entriesId = explode(',', MySQL::cleanValue($this->_context[0]));
 			$entriesId = array_map(array('General', 'intval'), $entriesId);
 			if (!is_array($entriesId) || empty($entriesId)) {
-				$this->_Result->appendChild(new XMLElement('error', 'No entry no found'));
+				$this->_Result->appendChild(new XMLElement('error', __('No entry no found')));
 				return;
 			}
 			
 			$parentFieldId = General::intval($this->_context[1]);
 			if ($parentFieldId < 1) {
-				$this->_Result->appendChild(new XMLElement('error', 'Parent id not valid'));
+				$this->_Result->appendChild(new XMLElement('error', __('Parent field id not valid')));
 				return;
 			}
 			
 			$parentField = $this->fieldManager->fetch($parentFieldId);
 			if (!$parentField || empty($parentField)) {
-				$this->_Result->appendChild(new XMLElement('error', 'Parent field not found'));
+				$this->_Result->appendChild(new XMLElement('error', __('Parent field not found')));
+				return;
+			}
+			
+			if ($parentField->get('type') != 'entry_relationship') {
+				$this->_Result->appendChild(new XMLElement('error', __('Parent field is `%s`, not `entry_relationship`', array($parentField->get('type')))));
 				return;
 			}
 			
@@ -104,7 +121,8 @@
 					
 					$li = new XMLElement('li', null, array(
 						'data-entry-id' => $entryId,
-						'data-section' => $entrySectionHandle
+						'data-section' => $entrySectionHandle,
+						'data-section-id' => $entrySection->get('id'),
 					));
 					$header = new XMLElement('header', null, array('class' => 'frame-header'));
 					$title = new XMLElement('h4');
@@ -119,7 +137,19 @@
 							'data-edit' => $entryId,
 						)));
 					}
+					if ($parentField->is('allow_delete')) {
+						$options->appendChild(new XMLElement('a', __('Delete'), array(
+							'class' => 'delete',
+							'data-delete' => $entryId,
+						)));
+					}
 					if ($parentField->is('allow_link')) {
+						$options->appendChild(new XMLElement('a', __('Replace'), array(
+							'class' => 'unlink',
+							'data-replace' => $entryId,
+						)));
+					}
+					if ($parentField->is('allow_delete') || $parentField->is('allow_link')) {
 						$options->appendChild(new XMLElement('a', __('Un-link'), array(
 							'class' => 'unlink',
 							'data-unlink' => $entryId,
